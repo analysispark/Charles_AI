@@ -897,3 +897,358 @@
 +Do not modify the chat endpoint.
 +
 +We will test the module separately before integration.
+
+# 2026-07-13 15:26:30.156593
++Implement Memory Phase 2.
++
++Requirements:
++
++1. Keep all current functionality unchanged.
++
++2. Keep RAW conversation storage unchanged.
++
++3. Add summary generation only.
++
++4. Use the existing Ollama model.
++
++5. Generate a summary from conversation history.
++
++6. Save the result into:
++
++Memory/Summaries/YYYY-MM-DD_summary.md
++
++7. Do not implement Decisions.
++
++8. Do not implement Insights.
++
++9. Do not implement Tasks.
++
++Goal:
++
++Verify the full pipeline:
++
++Conversation
++→ Ollama
++→ Summary
++→ Markdown file
+
+# 2026-07-13 15:30:59.223579
++Fix backend/memory/engine.py.
++
++The current code imports:
++
++from ..ollama_client import chat_with_ollama
++
++but chat_with_ollama does not exist.
++
++Use the existing OllamaClient class instead.
++
++Requirements:
++
++1. Import:
++
++from ..ollama_client import OllamaClient
++
++2. Create:
++
++client = OllamaClient()
++
++3. Replace all chat_with_ollama calls with:
++
++client.send_message(prompt)
++
++4. Do not modify ollama_client.py.
++
++5. Do not modify chat.py.
++
++Only update backend/memory/engine.py.
+
+# 2026-07-13 15:40:24.028395
++Update the Memory Engine.
++
++Requirements:
++
++1. Read memory_model from config/settings.json.
++
++2. Use memory_model for summary generation.
++
++3. Keep chat_model for normal conversation.
++
++4. Do not modify chat.py.
++
++5. Do not modify current chat functionality.
++
++6. Only update backend/memory/engine.py.
++
++7. MemoryEngine must use the memory_model instead of the chat model.
+
+# 2026-07-13 15:46:29.698322
++Fix MemoryEngine.
++
++Current issues:
++
++1. memory_model is read but never used.
++
++2. settings.json structure is:
++
++config["ollama"]["memory_model"]
++
++not
++
++config["memory_model"].
++
++Requirements:
++
++1. Read:
++
++config["ollama"]["memory_model"]
++
++2. Create:
++
++client = OllamaClient(model=memory_model)
++
++3. Use that client to generate summaries.
++
++4. Keep chat model unchanged.
++
++5. Do not modify chat.py.
++
++6. Do not modify frontend.
+
+# 2026-07-13 16:21:53.112014
++Act as the lead architect and implementation engineer of the Lucifer Memory System.
++
++Current status:
++
++✅ RAW conversation storage works
++✅ Summary generation works using qwen3:8b
++✅ Summary markdown generation works
++✅ Dedicated memory model (qwen3:8b) is configured
++✅ Main chat functionality must remain unchanged
++
++Goal:
++
++Implement Memory Phase 3: Decision Generation.
++
++Do NOT implement Insights yet.
++Do NOT implement Tasks yet.
++
++==================================================
++MEMORY PHILOSOPHY
++==================================================
++
++Lucifer Memory is NOT:
++
++- a RAG system
++- a Vector Database
++- a Search Engine
++
++Lucifer Memory exists to preserve:
++
++- Project history
++- User decisions
++- User preferences
++- Project evolution
++
++The goal is long-term memory, not information retrieval.
++
++==================================================
++SUMMARY IMPROVEMENT
++==================================================
++
++The current summary quality is too literal.
++
++The summary should NOT be a conversation summary.
++
++The summary should be a PROJECT MEMORY RECORD.
++
++Ignore:
++
++- placeholder text
++- testing messages
++- debugging messages
++- temporary examples
++- AI self-references
++- implementation artifacts
++
++Focus only on:
++
++- actual project goals
++- implementation progress
++- completed work
++- accepted decisions
++- next planned actions
++
++Do NOT describe who said what.
++
++Do NOT describe the conversation itself.
++
++Do NOT mention that the user asked a question.
++
++Do NOT mention example text.
++
++Do NOT mention placeholder content.
++
++Write only persistent project memory.
++
++Output format:
++
++# Summary
++
++- ...
++- ...
++- ...
++
++Maximum 5 bullet points.
++
++==================================================
++DECISION GENERATION
++==================================================
++
++Create a new method:
++
++generate_decisions(conversation_history)
++
++inside:
++
++backend/memory/engine.py
++
++Use:
++
++OllamaClient(model=memory_model)
++
++where memory_model is loaded from:
++
++config/settings.json
++
++Save output into:
++
++Memory/Decisions/YYYY-MM-DD_decisions.md
++
++Include metadata:
++
++---
++date:
++project:
++source:
++tags:
++---
++
++==================================================
++DECISION EXTRACTION RULES
++==================================================
++
++You are a Decision Extraction Engine.
++
++Extract ONLY decisions that were explicitly:
++
++- accepted
++- chosen
++- approved
++- agreed upon
++
++Do NOT infer.
++
++Do NOT guess.
++
++Do NOT invent.
++
++Do NOT convert technical facts into decisions.
++
++Do NOT convert recommendations into decisions unless they were explicitly accepted.
++
++If no decisions exist, return:
++
++"No decisions identified."
++
++==================================================
++DECISION OUTPUT FORMAT
++==================================================
++
++# D-0001
++
++Decision:
++<decision>
++
++Reason:
++<reason>
++
++Status:
++Accepted
++
++==================================================
++VALID DECISION EXAMPLES
++==================================================
++
++Examples:
++
++- Use qwen3:8b as the memory model
++- Keep chat functionality unchanged
++- Store memory in markdown files
++- Separate Memory Engine from chat flow
++- Use dedicated memory folders
++
++==================================================
++INVALID DECISION EXAMPLES
++==================================================
++
++Examples:
++
++- Generic technical facts
++- AI-generated assumptions
++- Unaccepted recommendations
++- Future possibilities
++- Speculation
++- Implementation ideas that were never agreed upon
++
++==================================================
++PROJECT SAFETY RULES
++==================================================
++
++Keep existing functionality unchanged.
++
++Do NOT modify:
++
++- frontend
++- chat API structure
++- RAW storage
++- existing Ollama chat flow
++
++Do NOT replace working functionality.
++
++Only extend the Memory Engine.
++
++==================================================
++IMPLEMENTATION REVIEW
++==================================================
++
++Before writing code:
++
++1. Review the architecture.
++2. Identify design flaws.
++3. Identify memory duplication risks.
++4. Identify decision tracking risks.
++5. Identify future scaling risks.
++
++Then improve the implementation if needed.
++
++==================================================
++SUCCESS CRITERIA
++==================================================
++
++Conversation
++→ RAW
++→ Summary
++→ Decisions
++→ Markdown files
++
++Requirements:
++
++✅ All output generated by memory_model
++✅ No hardcoded content
++✅ No placeholder content
++✅ Summary stored in markdown
++✅ Decisions stored in markdown
++✅ Existing chat remains functional
++✅ RAW storage remains functional
++✅ Summary storage remains functional
