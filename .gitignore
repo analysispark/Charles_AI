@@ -25,3 +25,7 @@ Thumbs.db
 
 # Secrets
 config/local.json
+
+# TEST-Memory
+Memory/*
+!Memory/.gitkeep
