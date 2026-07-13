@@ -470,3 +470,159 @@
 
 # 2026-07-13 13:59:58.078843
 +n
+
+# 2026-07-13 14:27:23.424962
++Create a new design document:
++
++docs/Lucifer_Memory_Design_v1.md
++
++Purpose:
++
++Lucifer should automatically convert conversations into structured memory.
++
++Memory folders:
++
++Memory/
++├── RAW
++├── Summaries
++├── Decisions
++├── Insights
++└── Tasks
++
++Requirements:
++
++1. Raw conversation logs must be stored in Memory/RAW.
++
++2. Lucifer must be able to analyze a conversation and generate:
++
++- Summary
++- Decisions
++- Insights
++- Tasks
++
++3. Generated memories must be saved as Markdown files.
++
++4. Every memory file must include metadata:
++
++---
++date:
++project:
++source:
++tags:
++---
++
++5. Phase 1 should NOT be fully automatic.
++
++Instead, the user will manually trigger memory generation using a command such as:
++
++"Summarize today's conversation"
++
++6. When triggered, Lucifer should:
++
++- Read the current conversation
++- Generate Summary
++- Generate Decisions
++- Generate Insights
++- Generate Tasks
++- Save each result into the appropriate Memory folder
++
++7. Do not implement Vault search.
++
++8. Do not implement RAG.
++
++9. Do not implement Vector Database.
++
++10. Focus only on Memory processing and storage.
++
++At the end provide:
++
++1. Proposed architecture
++2. File structure
++3. Processing flow
++4. Example outputs
++5. Future roadmap
+
+# 2026-07-13 14:29:39.715992
++n
+
+# 2026-07-13 14:29:59.780234
++Before creating the file, revise the design.
++
++Add:
++
++1. Decision IDs (D-0001, D-0002 ...)
++2. Insight format focused on user preferences and behavior
++3. Task status tracking
++4. Episode-level memory records
++5. Remove RAG and Vector Database from the roadmap
++
++The Memory system should focus on preserving project history and user decisions rather than knowledge retrieval.
++
++Update the design document accordingly.
+
+# 2026-07-13 14:31:32.600288
++y
+
+# 2026-07-13 14:38:13.460745
++Read docs/Lucifer_Memory_Design_v1.md
++
++Review the design critically.
++
++Identify:
++
++1. Missing components
++2. Weak points
++3. Long-term maintenance risks
++4. Potential issues with memory growth
++5. Potential issues with duplicate memories
++6. Potential issues with decision tracking
++
++Do not implement anything.
++
++Provide recommendations for Lucifer_Memory_Design_v1.1.
++``
+
+# 2026-07-13 14:40:47.652938
++n
+
+# 2026-07-13 14:41:13.345321
++Do not create Lucifer_Memory_Design_v1.1.md yet.
++
++The proposal introduces unnecessary complexity.
++
++Keep the Lucifer philosophy:
++
++"Simple, modular, maintainable."
++
++For Memory Design v1.1:
++
++1. Focus only on:
++   - RAW
++   - Summaries
++   - Decisions
++   - Insights
++   - Tasks
++
++2. Remove:
++   - Vault Search Integration
++   - Memory Cleanup
++   - Archive Management
++   - Schema Versioning
++   - Hash-based Duplication
++   - Quality Validation
++
++3. Keep:
++   - Session-based processing
++   - Decision IDs
++   - Insight generation
++   - Task status tracking
++
++4. The goal is to create the smallest working Memory Engine.
++
++Revise the document accordingly.
+
+# 2026-07-13 14:44:03.484902
++y
+
+# 2026-07-13 14:44:55.230893
++N
