@@ -1,0 +1,19 @@
+Lucifer/
+├── backend/
+│   ├── __init__.py
+│   ├── main.py
+│   ├── chat.py
+│   └── ollama_client.py
+├── frontend/
+│   ├── index.html
+│   ├── style.css
+│   └── script.js
+├── config/
+│   ├── __init__.py
+│   └── settings.json
+├── logs/
+├── tests/
+│   ├── __init__.py
+│   └── test_chat.py
+└── docs/
+    └── Lucifer_Design_v1.md

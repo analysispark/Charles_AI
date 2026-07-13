@@ -1,0 +1,15 @@
+{
+    "ollama": {
+        "host": "localhost",
+        "port": 11434,
+        "default_model": "qwen"
+    },
+    "server": {
+        "host": "0.0.0.0",
+        "port": 8000
+    },
+    "ui": {
+        "title": "Lucifer AI",
+        "description": "Personal Research Assistant"
+    }
+}
