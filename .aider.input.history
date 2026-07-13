@@ -1252,3 +1252,502 @@
 +✅ Existing chat remains functional
 +✅ RAW storage remains functional
 +✅ Summary storage remains functional
+
+# 2026-07-13 16:35:27.144417
++Implement Memory Phase 4: Insight Generation.
++
++Current status:
++
++✅ RAW generation works
++✅ Summary generation works
++✅ Decision generation works
++
++Goal:
++
++Add Insight Generation.
++
++Do NOT implement Tasks yet.
++
++Requirements:
++
++1. Create:
++
++generate_insights(conversation_history)
++
++inside:
++
++backend/memory/engine.py
++
++2. Use:
++
++OllamaClient(model=memory_model)
++
++3. Save to:
++
++Memory/Insights/YYYY-MM-DD_insights.md
++
++4. Include metadata:
++
++---
++date:
++project:
++source:
++tags:
++---
++
++5. Insight Rules
++
++Insights describe:
++
++- user preferences
++- user working style
++- user decision patterns
++- user development philosophy
++
++Do NOT describe the conversation.
++
++Do NOT summarize events.
++
++Do NOT repeat decisions.
++
++6. Output format
++
++# I-0001
++
++Insight:
++...
++
++Evidence:
++...
++
++Confidence:
++High
++
++7. Confidence values
++
++High
++Medium
++Low
++
++8. If no insights exist:
++
++"No insights identified."
++
++9. Keep all existing functionality unchanged.
++
++Do not modify:
++
++- chat.py
++- frontend
++- RAW
++- Summary
++- Decisions
++
++Only implement Insights.
++
++Success criteria:
++
++Conversation
++→ RAW
++→ Summary
++→ Decisions
++→ Insights
++→ Markdown
+
+# 2026-07-13 16:40:10.572009
++Simplify generate_insights().
++
++Current insight generation causes timeout.
++
++Requirements:
++
++1. Keep all existing functionality unchanged.
++
++2. Keep:
++   - Memory/Insights output
++   - markdown format
++   - memory_model usage
++
++3. Simplify the prompt.
++
++Replace the current prompt with:
++
++--------------------------------------------------
++
++You are a Long-Term Memory Insight Engine.
++
++Extract up to 3 stable user preferences from the conversation.
++
++Only identify:
++
++- user preferences
++- working style
++
++Do NOT:
++
++- summarize the conversation
++- describe events
++- repeat decisions
++- analyze development philosophy
++- analyze decision patterns
++
++Output format:
++
++# I-0001
++
++Insight:
++...
++
++Evidence:
++...
++
++Maximum 3 insights.
++
++If no insights exist, return:
++
++No insights identified.
++
++--------------------------------------------------
++
++4. Remove Confidence scoring entirely.
++
++5. Do not modify Summary generation.
++
++6. Do not modify Decision generation.
++
++Only update generate_insights().
+
+# 2026-07-13 16:52:42.049308
++Fix generate_insights().
++
++Current issues:
++
++1. conversation_text is not included in the prompt.
++
++The prompt says:
++"Extract insights from the conversation"
++
++but {conversation_text} is missing.
++
++2. Fallback memory model is incorrect.
++
++Current:
++qwen3-coder:30b
++
++Expected:
++qwen3:8b
++
++Requirements:
++
++- Insert conversation_text into the prompt.
++- Keep the simplified insight prompt.
++- Change fallback memory model to qwen3:8b.
++- Do not modify Summary.
++- Do not modify Decisions.
++- Only update generate_insights().
+
+# 2026-07-13 17:12:39.031592
++Implement Memory Phase 5: Task Generation.
++
++Current status:
++
++✅ RAW conversation storage works
++✅ Summary generation works
++✅ Decision generation works
++✅ Insight generation works
++✅ Dedicated memory model (qwen3:8b) is configured
++
++Goal:
++
++Implement Task Generation.
++
++Requirements:
++
++==================================================
++KOREAN OUTPUT POLICY
++==================================================
++
++All memory outputs must be generated in Korean.
++
++Requirements:
++
++- Generate all outputs in Korean.
++- Do not translate project names.
++- Do not translate model names.
++- Do not translate folder names.
++- Use natural Korean markdown content.
++- Apply this rule to:
++  - Summary
++  - Decisions
++  - Insights
++  - Tasks
++
++Example:
++
++통찰:
++사용자는 기존 기능을 유지하면서 점진적으로 기능을 확장하는 방식을 선호한다.
++
++근거:
++사용자가 기존 기능을 깨지 않고 기능을 추가하고 싶다고 명시적으로 언급함.
++
++==================================================
++TASK GENERATION
++==================================================
++
++Create a new method:
++
++generate_tasks(conversation_history)
++
++inside:
++
++backend/memory/engine.py
++
++Use:
++
++OllamaClient(model=memory_model)
++
++where memory_model is loaded from:
++
++config/settings.json
++
++Save output into:
++
++Memory/Tasks/YYYY-MM-DD_tasks.md
++
++Include metadata:
++
++---
++date:
++project:
++source:
++tags:
++---
++
++==================================================
++TASK EXTRACTION RULES
++==================================================
++
++You are a Task Extraction Engine.
++
++Extract only actionable tasks.
++
++A task must be:
++
++- unfinished
++- actionable
++- clearly implied or explicitly stated
++
++Do NOT include:
++
++- completed work
++- decisions
++- insights
++- assumptions
++
++If no tasks exist, return:
++
++"식별된 작업이 없습니다."
++
++==================================================
++TASK OUTPUT FORMAT
++==================================================
++
++# T-0001
++
++작업:
++...
++
++상태:
++todo
++
++우선순위:
++high
++
++==================================================
++STATUS VALUES
++==================================================
++
++todo
++in-progress
++completed
++
++==================================================
++PRIORITY VALUES
++==================================================
++
++high
++medium
++low
++
++==================================================
++EXAMPLES
++==================================================
++
++# T-0001
++
++작업:
++Task Engine 구현
++
++상태:
++todo
++
++우선순위:
++high
++
++# T-0002
++
++작업:
++Memory Engine을 채팅 흐름에 통합
++
++상태:
++todo
++
++우선순위:
++medium
++
++==================================================
++SUMMARY IMPROVEMENT
++==================================================
++
++Update Summary prompt so that summaries are generated in Korean.
++
++The summary should be a PROJECT MEMORY RECORD.
++
++Do NOT summarize the conversation.
++
++Focus on:
++
++- 프로젝트 목표
++- 구현 진행 상황
++- 완료된 작업
++- 승인된 결정
++- 다음 행동 계획
++
++Output format:
++
++# 요약
++
++- ...
++- ...
++- ...
++
++Maximum 5 bullet points.
++
++==================================================
++DECISION IMPROVEMENT
++==================================================
++
++Update Decision prompt so that Decisions are generated in Korean.
++
++Format:
++
++# D-0001
++
++결정:
++...
++
++근거:
++...
++
++상태:
++승인됨
++
++==================================================
++INSIGHT IMPROVEMENT
++==================================================
++
++Update Insight prompt so that Insights are generated in Korean.
++
++Format:
++
++# I-0001
++
++통찰:
++...
++
++근거:
++...
++
++==================================================
++PROJECT SAFETY RULES
++==================================================
++
++Keep existing functionality unchanged.
++
++Do NOT modify:
++
++- frontend
++- chat.py
++- RAW storage
++- existing Ollama chat flow
++
++Only extend the Memory Engine.
++
++==================================================
++SUCCESS CRITERIA
++==================================================
++
++Conversation
++→ RAW
++→ Summary (Korean)
++→ Decisions (Korean)
++→ Insights (Korean)
++→ Tasks (Korean)
++→ Markdown files
++
++Requirements:
++
++✅ All output generated by memory_model
++✅ All memory content generated in Korean
++✅ Project names are not translated
++✅ Existing chat functionality remains unchanged
++✅ Existing memory functionality remains unchanged
++✅ Task markdown files are generated successfully
+
+# 2026-07-13 17:18:35.559402
++Fix generate_tasks().
++
++Current issue:
++
++The task prompt does not include conversation_text.
++
++The model is asked to extract tasks,
++but the conversation itself is never provided.
++
++Requirements:
++
++1. Insert:
++
++대화:
++
++{conversation_text}
++
++into the task prompt.
++
++2. Place the conversation near the beginning of the prompt.
++
++3. Keep all Korean output rules.
++
++4. Keep the current task format:
++
++# T-0001
++
++작업:
++...
++
++상태:
++todo
++
++우선순위:
++high
++
++5. Do not modify Summary.
++
++6. Do not modify Decisions.
++
++7. Do not modify Insights.
++
++Only update generate_tasks().
+
+# 2026-07-13 17:22:57.003654
++y
