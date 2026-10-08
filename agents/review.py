@@ -17,12 +17,12 @@ class ReviewAgent:
 다음 결과물을 검토하라.
 
 검토 항목:
-1. 사실 오류
-2. 논리 오류
-3. 통계적 오류
-4. 실행 불가능한 코드
-5. 지원되지 않는 또는 조작된 주장
-6. 구체적인 수정 지침
+1. Factual Errors
+2. Logical Errors
+3. Statistical Errors
+4. Non-executable Code
+5. Unsupported Claims
+6. Concrete Revision Instructions
 
 {text}
 

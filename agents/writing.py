@@ -19,7 +19,7 @@ class WritingAgent:
 연구 노트:
 {research_notes}
 
-가상 값이나 합성된 값을 실제 관찰로 주장하지 마라.
+가상 값이나 합성된 값을 실제 관찰로 주장하지 마라. 실제 데이터만 사용하라.
 """,
                     source="user"
                 )

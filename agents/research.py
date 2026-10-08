@@ -19,12 +19,12 @@ class ResearchAgent:
 {task}
 
 구조화된 연구 노트를 작성하라. 다음 섹션을 포함하라:
-- 핵심 개념
-- 필요한 증거
-- 방법론
-- 가정
-- 제한 사항
-- 확인이 필요한 사실
+- Core Concepts
+- Required Evidence
+- Methods
+- Assumptions
+- Limitations
+- Facts Requiring Verification
 
 최종 보고서는 작성하지 않아도 된다.
 """,
