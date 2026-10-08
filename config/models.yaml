@@ -13,5 +13,3 @@ review:
 coding:
   model: qwen2.5-coder:14b
 
-revision:
-  model: qwen3:8b
