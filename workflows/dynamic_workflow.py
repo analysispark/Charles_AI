@@ -1,4 +1,5 @@
 import json
+import asyncio
 
 from agents.planner import Planner
 from agents.research import ResearchAgent
@@ -46,41 +47,107 @@ class DynamicWorkflow:
 
         tasks = plan["agents"]
 
+        if "review" not in tasks:
+            tasks.append("review")
+
         print("\n[SELECTED AGENTS]")
         print(tasks)
 
-        result = goal
+        #
+        # 1. Research
+        #
+        research_result = ""
 
-        for task in tasks:
+        if "research" in tasks:
 
-            print(f"\n[RUNNING] {task}")
+            print("\n[RUNNING] research")
 
-            if task == "research":
+            research_result = await ResearchAgent().run(goal)
 
-                result = await ResearchAgent().run(result)
+        #
+        # 2. Coding + Writing 병렬 실행
+        #
+        coding_result = ""
+        writing_result = ""
 
-            elif task == "writing":
+        parallel_tasks = []
 
-                result = await WritingAgent().run(result)
+        if "coding" in tasks:
 
-            elif task == "coding":
+            print("[QUEUE] coding")
 
-                result = await CodingAgent().run(result)
+            parallel_tasks.append(
+                CodingAgent().run(research_result)
+            )
 
-            elif task == "review":
+        if "writing" in tasks:
 
-                review_result = await ReviewAgent().run(result)
+            print("[QUEUE] writing")
 
-                result = f"""
-# Generated Content
+            parallel_tasks.append(
+                WritingAgent().run(research_result)
+            )
 
-{result}
+        if parallel_tasks:
+
+            results = await asyncio.gather(
+                *parallel_tasks
+            )
+
+            idx = 0
+
+            if "coding" in tasks:
+                coding_result = results[idx]
+                idx += 1
+
+            if "writing" in tasks:
+                writing_result = results[idx]
+
+        #
+        # 3. 통합 결과 생성
+        #
+        combined_result = f"""
+# Research Result
+
+{research_result}
 
 ---
 
-# Review
+# Coding Result
+
+{coding_result}
+
+---
+
+# Writing Result
+
+{writing_result}
+"""
+
+        #
+        # 4. Review
+        #
+        review_result = ""
+
+        if "review" in tasks:
+
+            print("\n[RUNNING] review")
+
+            review_result = await ReviewAgent().run(
+                combined_result
+            )
+
+        #
+        # 5. 최종 결과
+        #
+        final_result = f"""
+{combined_result}
+
+---
+
+# Review Result
 
 {review_result}
 """
 
-        return result
+        return final_result
