@@ -24,3 +24,4 @@ vault/*
 
 # Linux
 .DS_Store
+.aider*
