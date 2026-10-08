@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+
+# Conda
+.env
+.venv
+
+# Logs
+logs/*
+
+# Outputs
+outputs/*
+
+# Papers
+papers/*
+
+# Local Vault
+vault/*
+
+# IDE
+.vscode/
+.idea/
+
+# Linux
+.DS_Store

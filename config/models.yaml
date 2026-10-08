@@ -1,0 +1,14 @@
+planner:
+  model: qwen3:8b
+
+research:
+  model: qwen3:8b
+
+writing:
+  model: qwen3:8b
+
+review:
+  model: qwen3:8b
+
+coding:
+  model: qwen3:8b
