@@ -18,6 +18,7 @@ class RevisionAgent:
             "- Correct factual, logical, statistical, and code errors.\n"
             "- Remove unsupported or fabricated claims.\n"
             "- Clearly label synthetic or hypothetical examples.\n"
+            "- Ensure all included Python code is executable with the documented input dataset.\n"
             "- Return only the final revised Markdown document.\n"
             "- Do not describe the revision process."
         )
