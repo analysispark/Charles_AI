@@ -30,14 +30,15 @@ class DynamicWorkflow:
         print(plan_text)
 
         try:
+            if isinstance(plan_text, dict):
+                plan = plan_text
+            else:
+                start = plan_text.find("{")
+                end = plan_text.rfind("}") + 1
 
-            start = plan_text.find("{")
-            end = plan_text.rfind("}") + 1
+                json_text = plan_text[start:end]
 
-            json_text = plan_text[start:end]
-
-            plan = json.loads(json_text)
-
+                plan = json.loads(json_text)
         except Exception as e:
 
             print("\n[WARNING]")
@@ -131,27 +132,21 @@ class DynamicWorkflow:
 
             print("\n[RUNNING] review")
 
-            combined_result = f"""
-# Research Result
+            review_input = f"""
+# Writing Result
 
-{context.artifacts["research"]}
+{context.artifacts["writing"]}
 
 ---
 
 # Coding Result
 
 {context.artifacts["coding"]}
-
----
-
-# Writing Result
-
-{context.artifacts["writing"]}
 """
 
             context.artifacts["review"] = await (
                 ReviewAgent().run(
-                    combined_result
+                    review_input
                 )
             )
 
@@ -163,41 +158,11 @@ class DynamicWorkflow:
 
             print("\n[RUNNING] revision")
 
-            final_document = f"""
-# Charles AI Result
-
-## Goal
-
-{context.goal}
-
----
-
-# Research Result
-
-{context.artifacts["research"]}
-
----
-
-# Coding Result
-
-{context.artifacts["coding"]}
-
----
-
-# Writing Result
-
-{context.artifacts["writing"]}
-
----
-
-# Review Result
-
-{context.artifacts["review"]}
-"""
-
             context.artifacts["revision"] = await (
                 RevisionAgent().run(
-                    final_document
+                    writing_result=context.artifacts["writing"],
+                    coding_result=context.artifacts["coding"],
+                    review_result=context.artifacts["review"]
                 )
             )
 

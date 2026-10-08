@@ -1,4 +1,5 @@
 from agents.base import load_model
+from autogen_core.models import UserMessage
 
 class RevisionAgent:
     def __init__(self):
@@ -20,6 +21,12 @@ class RevisionAgent:
             "- Return only the final revised Markdown document.\n"
             "- Do not describe the revision process."
         )
-        # Assuming the model has a method `generate` that takes a prompt and returns the response
-        response = await self.model.generate(prompt)
-        return response
+        response = await self.model.create(
+            messages=[
+                UserMessage(
+                    content=prompt,
+                    source="user",
+                )
+            ]
+        )
+        return response.content

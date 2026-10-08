@@ -10,6 +10,9 @@ writing:
 review:
   model: qwen3.6:27b-q4_K_M
 
+revision:
+  model: qwen3:8b
+
 coding:
   model: qwen2.5-coder:14b
 
