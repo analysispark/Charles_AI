@@ -7,13 +7,15 @@ class TaskContext:
 
     goal: str = ""
 
-    research: str = ""
-
-    coding: str = ""
-
-    writing: str = ""
-
-    review: str = ""
+    artifacts: dict = field(
+        default_factory=lambda: {
+            "research": "",
+            "coding": "",
+            "writing": "",
+            "review": "",
+            "revision": ""
+        }
+    )
 
     metadata: dict = field(default_factory=dict)
 

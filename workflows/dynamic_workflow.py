@@ -6,6 +6,7 @@ from agents.research import ResearchAgent
 from agents.writing import WritingAgent
 from agents.review import ReviewAgent
 from agents.coding import CodingAgent
+from agents.revision import RevisionAgent
 
 from src.context import TaskContext
 
@@ -56,6 +57,9 @@ class DynamicWorkflow:
         if "review" not in tasks:
             tasks.append("review")
 
+        if "revision" not in tasks:
+            tasks.append("revision")
+
         print("\n[SELECTED AGENTS]")
         print(tasks)
 
@@ -69,7 +73,7 @@ class DynamicWorkflow:
 
             print("\n[RUNNING] research")
 
-            context.research = await (
+            context.artifacts["research"] = await (
                 ResearchAgent().run(
                     context.goal
                 )
@@ -87,7 +91,7 @@ class DynamicWorkflow:
 
             parallel_tasks.append(
                 CodingAgent().run(
-                    context.research
+                    context.artifacts["research"]
                 )
             )
 
@@ -97,7 +101,7 @@ class DynamicWorkflow:
 
             parallel_tasks.append(
                 WritingAgent().run(
-                    context.research
+                    context.artifacts["research"]
                 )
             )
 
@@ -111,35 +115,13 @@ class DynamicWorkflow:
 
             if "coding" in tasks:
 
-                context.coding = results[idx]
+                context.artifacts["coding"] = results[idx]
 
                 idx += 1
 
             if "writing" in tasks:
 
-                context.writing = results[idx]
-
-        #
-        # COMBINED RESULT
-        #
-
-        combined_result = f"""
-# Research Result
-
-{context.research}
-
----
-
-# Coding Result
-
-{context.coding}
-
----
-
-# Writing Result
-
-{context.writing}
-"""
+                context.artifacts["writing"] = results[idx]
 
         #
         # REVIEW
@@ -149,17 +131,39 @@ class DynamicWorkflow:
 
             print("\n[RUNNING] review")
 
-            context.review = await (
+            combined_result = f"""
+# Research Result
+
+{context.artifacts["research"]}
+
+---
+
+# Coding Result
+
+{context.artifacts["coding"]}
+
+---
+
+# Writing Result
+
+{context.artifacts["writing"]}
+"""
+
+            context.artifacts["review"] = await (
                 ReviewAgent().run(
                     combined_result
                 )
             )
 
         #
-        # FINAL OUTPUT
+        # REVISION
         #
 
-        final_result = f"""
+        if "revision" in tasks:
+
+            print("\n[RUNNING] revision")
+
+            final_document = f"""
 # Charles AI Result
 
 ## Goal
@@ -170,25 +174,35 @@ class DynamicWorkflow:
 
 # Research Result
 
-{context.research}
+{context.artifacts["research"]}
 
 ---
 
 # Coding Result
 
-{context.coding}
+{context.artifacts["coding"]}
 
 ---
 
 # Writing Result
 
-{context.writing}
+{context.artifacts["writing"]}
 
 ---
 
 # Review Result
 
-{context.review}
+{context.artifacts["review"]}
 """
 
-        return final_result
+            context.artifacts["revision"] = await (
+                RevisionAgent().run(
+                    final_document
+                )
+            )
+
+        #
+        # FINAL OUTPUT
+        #
+
+        return context.artifacts["revision"]
