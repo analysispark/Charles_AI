@@ -7,6 +7,8 @@ from agents.writing import WritingAgent
 from agents.review import ReviewAgent
 from agents.coding import CodingAgent
 
+from src.context import TaskContext
+
 
 class DynamicWorkflow:
 
@@ -15,6 +17,10 @@ class DynamicWorkflow:
         self.planner = Planner()
 
     async def run(self, goal):
+
+        context = TaskContext()
+
+        context.goal = goal
 
         print("\n[PLANNER]")
 
@@ -53,22 +59,25 @@ class DynamicWorkflow:
         print("\n[SELECTED AGENTS]")
         print(tasks)
 
+        context.metadata["selected_agents"] = tasks
+
         #
-        # 1. Research
+        # RESEARCH
         #
-        research_result = ""
 
         if "research" in tasks:
 
             print("\n[RUNNING] research")
 
-            research_result = await ResearchAgent().run(goal)
+            context.research = await (
+                ResearchAgent().run(
+                    context.goal
+                )
+            )
 
         #
-        # 2. Coding + Writing 병렬 실행
+        # PARALLEL WORK
         #
-        coding_result = ""
-        writing_result = ""
 
         parallel_tasks = []
 
@@ -77,7 +86,9 @@ class DynamicWorkflow:
             print("[QUEUE] coding")
 
             parallel_tasks.append(
-                CodingAgent().run(research_result)
+                CodingAgent().run(
+                    context.research
+                )
             )
 
         if "writing" in tasks:
@@ -85,7 +96,9 @@ class DynamicWorkflow:
             print("[QUEUE] writing")
 
             parallel_tasks.append(
-                WritingAgent().run(research_result)
+                WritingAgent().run(
+                    context.research
+                )
             )
 
         if parallel_tasks:
@@ -97,57 +110,85 @@ class DynamicWorkflow:
             idx = 0
 
             if "coding" in tasks:
-                coding_result = results[idx]
+
+                context.coding = results[idx]
+
                 idx += 1
 
             if "writing" in tasks:
-                writing_result = results[idx]
+
+                context.writing = results[idx]
 
         #
-        # 3. 통합 결과 생성
+        # COMBINED RESULT
         #
+
         combined_result = f"""
 # Research Result
 
-{research_result}
+{context.research}
 
 ---
 
 # Coding Result
 
-{coding_result}
+{context.coding}
 
 ---
 
 # Writing Result
 
-{writing_result}
+{context.writing}
 """
 
         #
-        # 4. Review
+        # REVIEW
         #
-        review_result = ""
 
         if "review" in tasks:
 
             print("\n[RUNNING] review")
 
-            review_result = await ReviewAgent().run(
-                combined_result
+            context.review = await (
+                ReviewAgent().run(
+                    combined_result
+                )
             )
 
         #
-        # 5. 최종 결과
+        # FINAL OUTPUT
         #
+
         final_result = f"""
-{combined_result}
+# Charles AI Result
+
+## Goal
+
+{context.goal}
+
+---
+
+# Research Result
+
+{context.research}
+
+---
+
+# Coding Result
+
+{context.coding}
+
+---
+
+# Writing Result
+
+{context.writing}
 
 ---
 
 # Review Result
 
-{review_result}
+{context.review}
 """
 
         return final_result
