@@ -35,10 +35,12 @@ class DynamicWorkflow:
     def __init__(self):
 
         self.planner = Planner()
+        self.last_context = None
 
     async def run(self, goal):
 
         context = TaskContext()
+        self.last_context = context
 
         context.goal = goal
 

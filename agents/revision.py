@@ -1,11 +1,18 @@
 from agents.base import load_model
 from autogen_core.models import UserMessage
 
+
 class RevisionAgent:
+
     def __init__(self):
         self.model = load_model("revision")
 
-    async def run(self, writing_result, coding_result, review_result):
+    async def run(
+        self,
+        writing_result,
+        coding_result,
+        review_result,
+    ):
         prompt = (
             f"{writing_result}\n\n"
             f"# Coding Result\n"
@@ -32,12 +39,17 @@ class RevisionAgent:
             "- Return only the final revised Markdown document.\n"
             "- Do not include review or revision-process commentary."
         )
+
         response = await self.model.create(
             messages=[
                 UserMessage(
                     content=prompt,
                     source="user",
                 )
-            ]
+            ],
+            extra_create_args={
+                "think": False,
+            },
         )
+
         return response.content

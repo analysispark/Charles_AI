@@ -1,4 +1,6 @@
 import asyncio
+import json
+from pathlib import Path
 
 from workflows.dynamic_workflow import DynamicWorkflow
 
@@ -13,7 +15,40 @@ Markdown 문서를 작성하라.
 
     workflow = DynamicWorkflow()
 
-    result = await workflow.run(goal)
+    def save_debug_artifacts(context):
+        debug_dir = Path("outputs/debug")
+        debug_dir.mkdir(parents=True, exist_ok=True)
+
+        (debug_dir / "goal.md").write_text(context.goal, encoding="utf-8")
+
+        artifacts = {
+            "research": context.artifacts.get("research", ""),
+            "coding": context.artifacts.get("coding", ""),
+            "writing": context.artifacts.get("writing", ""),
+            "review": context.artifacts.get("review", ""),
+            "revision": context.artifacts.get("revision", ""),
+        }
+
+        for name, content in artifacts.items():
+            (debug_dir / f"{name}.md").write_text(str(content) if content else "", encoding="utf-8")
+
+        metadata = {
+            "created_at": context.created_at,
+            "metadata": context.metadata,
+        }
+
+        (debug_dir / "metadata.json").write_text(
+            json.dumps(metadata, ensure_ascii=False, indent=2),
+            encoding="utf-8"
+        )
+
+        print("\n[SAVED] outputs/debug artifacts")
+
+    try:
+        result = await workflow.run(goal)
+    finally:
+        if workflow.last_context:
+            save_debug_artifacts(workflow.last_context)
 
     print("\n[FINAL RESULT]")
     print(result)

@@ -55,9 +55,12 @@ class ReviewAgent:
 
 300단어 이하로 답변하라.
 """,
-                    source="user"
+                    source="user",
                 )
-            ]
+            ],
+            extra_create_args={
+                "think": False,
+            },
         )
 
         return result.content

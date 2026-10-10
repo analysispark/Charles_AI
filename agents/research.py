@@ -30,7 +30,10 @@ class ResearchAgent:
 """,
                     source="user"
                 )
-            ]
+            ],
+            extra_create_args={
+                "think": False,
+            }
         )
 
         return result.content
