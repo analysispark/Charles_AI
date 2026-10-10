@@ -1,6 +1,25 @@
 import json
 import asyncio
 
+async def run_nonempty(operation, label, max_attempts=2):
+    last_exception = None
+    for attempt in range(max_attempts):
+        try:
+            last_exception = None
+            result = await operation()
+            if isinstance(result, str) and result.strip():
+                return result
+            print(f"[WARNING] {label} returned an empty result")
+        except Exception as e:
+            last_exception = e
+            print(f"[WARNING] {label} failed: {e}")
+        if attempt + 1 < max_attempts:
+            print(f"[RETRY] {label} attempt {attempt + 2}")
+        else:
+            if last_exception:
+                raise last_exception
+            raise RuntimeError(f"{label} returned an empty result after {max_attempts} attempts")
+
 from agents.planner import Planner
 from agents.research import ResearchAgent
 from agents.writing import WritingAgent
@@ -25,7 +44,10 @@ class DynamicWorkflow:
 
         print("\n[PLANNER]")
 
-        plan_text = await self.planner.create_plan(goal)
+        plan_text = await run_nonempty(
+            lambda: self.planner.create_plan(goal),
+            "Planner.create_plan"
+        )
 
         print(plan_text)
 
@@ -89,14 +111,10 @@ class DynamicWorkflow:
 
         print("\n[RUNNING] research")
 
-        context.artifacts["research"] = await (
-            ResearchAgent().run(
-                context.goal
-            )
+        context.artifacts["research"] = await run_nonempty(
+            lambda: ResearchAgent().run(context.goal),
+            "ResearchAgent.run"
         )
-
-        if not context.artifacts["research"].strip():
-            raise RuntimeError("ResearchAgent returned an empty result")
 
         #
         # PARALLEL WORK
@@ -117,8 +135,9 @@ Research Notes:
             print("[QUEUE] coding")
 
             parallel_tasks.append(
-                CodingAgent().run(
-                    shared_source_input
+                run_nonempty(
+                    lambda: CodingAgent().run(shared_source_input),
+                    "CodingAgent.run"
                 )
             )
 
@@ -127,8 +146,9 @@ Research Notes:
             print("[QUEUE] writing")
 
             parallel_tasks.append(
-                WritingAgent().run(
-                    shared_source_input
+                run_nonempty(
+                    lambda: WritingAgent().run(shared_source_input),
+                    "WritingAgent.run"
                 )
             )
 
@@ -168,10 +188,9 @@ Coding Result:
 {context.artifacts["coding"]}
 """
 
-        context.artifacts["review"] = await (
-            ReviewAgent().run(
-                review_input
-            )
+        context.artifacts["review"] = await run_nonempty(
+            lambda: ReviewAgent().run(review_input),
+            "ReviewAgent.run"
         )
 
         #
@@ -181,8 +200,8 @@ Coding Result:
 
         print("\n[RUNNING] revision")
 
-        context.artifacts["revision"] = await (
-            RevisionAgent().run(
+        context.artifacts["revision"] = await run_nonempty(
+            lambda: RevisionAgent().run(
                 writing_result=f"""
 User Goal:
 {context.goal}
@@ -192,7 +211,8 @@ Writing Result:
 """,
                 coding_result=context.artifacts["coding"],
                 review_result=context.artifacts["review"]
-            )
+            ),
+            "RevisionAgent.run"
         )
 
         #
