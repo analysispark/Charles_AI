@@ -53,13 +53,29 @@ class DynamicWorkflow:
                 ]
             }
 
-        tasks = plan["agents"]
+        if not isinstance(plan, dict) or "agents" not in plan or not isinstance(plan["agents"], list):
+            plan = {
+                "agents": [
+                    "research",
+                    "writing",
+                    "review"
+                ]
+            }
 
+        tasks = [task for task in plan.get("agents", []) if isinstance(task, str) and task in ["research", "coding", "writing", "review", "revision"]]
+        tasks = list(dict.fromkeys(tasks))
+
+
+        # Ensure research, review, and revision are always included
+        if "research" not in tasks:
+            tasks.append("research")
         if "review" not in tasks:
             tasks.append("review")
-
         if "revision" not in tasks:
             tasks.append("revision")
+
+        canonical_order = ["research", "coding", "writing", "review", "revision"]
+        tasks = [task for task in canonical_order if task in tasks]
 
         print("\n[SELECTED AGENTS]")
         print(tasks)
@@ -70,15 +86,17 @@ class DynamicWorkflow:
         # RESEARCH
         #
 
-        if "research" in tasks:
 
-            print("\n[RUNNING] research")
+        print("\n[RUNNING] research")
 
-            context.artifacts["research"] = await (
-                ResearchAgent().run(
-                    context.goal
-                )
+        context.artifacts["research"] = await (
+            ResearchAgent().run(
+                context.goal
             )
+        )
+
+        if not context.artifacts["research"].strip():
+            raise RuntimeError("ResearchAgent returned an empty result")
 
         #
         # PARALLEL WORK
@@ -86,13 +104,21 @@ class DynamicWorkflow:
 
         parallel_tasks = []
 
+        shared_source_input = f"""
+User Goal:
+{context.goal}
+
+Research Notes:
+{context.artifacts["research"]}
+"""
+
         if "coding" in tasks:
 
             print("[QUEUE] coding")
 
             parallel_tasks.append(
                 CodingAgent().run(
-                    context.artifacts["research"]
+                    shared_source_input
                 )
             )
 
@@ -102,7 +128,7 @@ class DynamicWorkflow:
 
             parallel_tasks.append(
                 WritingAgent().run(
-                    context.artifacts["research"]
+                    shared_source_input
                 )
             )
 
@@ -128,43 +154,46 @@ class DynamicWorkflow:
         # REVIEW
         #
 
-        if "review" in tasks:
 
-            print("\n[RUNNING] review")
+        print("\n[RUNNING] review")
 
-            review_input = f"""
-# Writing Result
+        review_input = f"""
+User Goal:
+{context.goal}
 
+Writing Result:
 {context.artifacts["writing"]}
 
----
-
-# Coding Result
-
+Coding Result:
 {context.artifacts["coding"]}
 """
 
-            context.artifacts["review"] = await (
-                ReviewAgent().run(
-                    review_input
-                )
+        context.artifacts["review"] = await (
+            ReviewAgent().run(
+                review_input
             )
+        )
 
         #
         # REVISION
         #
 
-        if "revision" in tasks:
 
-            print("\n[RUNNING] revision")
+        print("\n[RUNNING] revision")
 
-            context.artifacts["revision"] = await (
-                RevisionAgent().run(
-                    writing_result=context.artifacts["writing"],
-                    coding_result=context.artifacts["coding"],
-                    review_result=context.artifacts["review"]
-                )
+        context.artifacts["revision"] = await (
+            RevisionAgent().run(
+                writing_result=f"""
+User Goal:
+{context.goal}
+
+Writing Result:
+{context.artifacts["writing"]}
+""",
+                coding_result=context.artifacts["coding"],
+                review_result=context.artifacts["review"]
             )
+        )
 
         #
         # FINAL OUTPUT
