@@ -30,6 +30,92 @@ from agents.revision import RevisionAgent
 from src.context import TaskContext
 
 
+def parse_qa_result(raw_result):
+    if isinstance(raw_result, dict):
+        parsed = raw_result
+    elif isinstance(raw_result, str):
+        text = raw_result.strip()
+
+        start = text.find("{")
+        end = text.rfind("}")
+
+        if start == -1 or end == -1 or end < start:
+            raise ValueError(
+                "Final QA response does not contain a JSON object"
+            )
+
+        parsed = json.loads(text[start:end + 1])
+    else:
+        raise ValueError(
+            "Final QA response must be a dictionary or JSON string"
+        )
+
+    if not isinstance(parsed, dict):
+        raise ValueError(
+            "Final QA response must parse to a dictionary"
+        )
+
+    expected_fields = {
+        "status",
+        "score",
+        "critical_errors",
+        "required_revisions",
+    }
+
+    if set(parsed) != expected_fields:
+        raise ValueError(
+            "Final QA response has invalid fields"
+        )
+
+    status = parsed["status"]
+
+    if not isinstance(status, str):
+        raise ValueError("Final QA status must be a string")
+
+    status = status.strip().upper()
+
+    if status not in {"PASS", "FAIL"}:
+        raise ValueError("Final QA status must be PASS or FAIL")
+
+    score = parsed["score"]
+
+    if type(score) is not int or not 0 <= score <= 100:
+        raise ValueError(
+            "Final QA score must be an integer from 0 to 100"
+        )
+
+    critical_errors = parsed["critical_errors"]
+    required_revisions = parsed["required_revisions"]
+
+    if (
+        not isinstance(critical_errors, list)
+        or not all(
+            isinstance(item, str)
+            for item in critical_errors
+        )
+    ):
+        raise ValueError(
+            "critical_errors must be a list of strings"
+        )
+
+    if (
+        not isinstance(required_revisions, list)
+        or not all(
+            isinstance(item, str)
+            for item in required_revisions
+        )
+    ):
+        raise ValueError(
+            "required_revisions must be a list of strings"
+        )
+
+    return {
+        "status": status,
+        "score": score,
+        "critical_errors": critical_errors,
+        "required_revisions": required_revisions,
+    }
+
 class DynamicWorkflow:
 
     def __init__(self):
@@ -196,11 +282,24 @@ Coding Result:
         )
 
         #
-        # REVISION
+        # BOUNDED REVISION AND FINAL QA
         #
 
+        context.metadata["revision_attempts"] = 0
+        context.metadata["qa_attempts"] = 0
+        context.metadata["final_qa_score"] = 0
 
-        print("\n[RUNNING] revision")
+        max_revision_attempts = context.metadata[
+            "max_revision_attempts"
+        ]
+
+        #
+        # REVISION ATTEMPT 1
+        #
+
+        context.metadata["revision_attempts"] += 1
+
+        print("\n[RUNNING] revision attempt 1")
 
         context.artifacts["revision"] = await run_nonempty(
             lambda: RevisionAgent().run(
@@ -212,13 +311,106 @@ Writing Result:
 {context.artifacts["writing"]}
 """,
                 coding_result=context.artifacts["coding"],
-                review_result=context.artifacts["review"]
+                review_result=context.artifacts["review"],
             ),
-            "RevisionAgent.run"
+            "RevisionAgent.run attempt 1",
         )
 
         #
-        # FINAL OUTPUT
+        # FINAL QA ATTEMPT 1
         #
+
+        context.metadata["qa_attempts"] += 1
+
+        print("\n[RUNNING] final QA attempt 1")
+
+        raw_qa_result = await run_nonempty(
+            lambda: ReviewAgent().evaluate_final(
+                context.artifacts["revision"]
+            ),
+            "ReviewAgent.evaluate_final",
+        )
+
+        qa_result = parse_qa_result(raw_qa_result)
+
+        context.artifacts["qa_review"] = raw_qa_result
+        context.artifacts["qa_status"] = qa_result["status"]
+        context.metadata["final_qa_score"] = qa_result["score"]
+
+        if qa_result["status"] == "PASS":
+            return context.artifacts["revision"]
+
+        #
+        # REVISION ATTEMPT 2
+        #
+
+        if (
+            context.metadata["revision_attempts"]
+            < max_revision_attempts
+        ):
+            context.metadata["revision_attempts"] += 1
+
+            print("\n[RUNNING] revision attempt 2")
+
+            critical_errors_json = json.dumps(
+                qa_result["critical_errors"],
+                ensure_ascii=False,
+                indent=2,
+            )
+
+            required_revisions_json = json.dumps(
+                qa_result["required_revisions"],
+                ensure_ascii=False,
+                indent=2,
+            )
+
+            qa_revision_input = (
+                f"QA Score: {qa_result['score']}\n\n"
+                "Critical Errors:\n"
+                f"{critical_errors_json}\n\n"
+                "Required Revisions:\n"
+                f"{required_revisions_json}"
+            )
+
+            current_revision = context.artifacts["revision"]
+
+            context.artifacts["revision"] = await run_nonempty(
+                lambda: RevisionAgent().run(
+                    writing_result=f"""
+User Goal:
+{context.goal}
+
+Writing Result:
+{current_revision}
+""",
+                    coding_result=context.artifacts["coding"],
+                    review_result=qa_revision_input,
+                ),
+                "RevisionAgent.run attempt 2",
+            )
+
+            #
+            # FINAL QA ATTEMPT 2
+            #
+
+            context.metadata["qa_attempts"] += 1
+
+            print("\n[RUNNING] final QA attempt 2")
+
+            raw_qa_result = await run_nonempty(
+                lambda: ReviewAgent().evaluate_final(
+                    context.artifacts["revision"]
+                ),
+                "ReviewAgent.evaluate_final attempt 2",
+            )
+
+            qa_result = parse_qa_result(raw_qa_result)
+
+            context.artifacts["qa_review"] = raw_qa_result
+            context.artifacts["qa_status"] = qa_result["status"]
+            context.metadata["final_qa_score"] = qa_result["score"]
+
+            if qa_result["status"] == "PASS":
+                return context.artifacts["revision"]
 
         return context.artifacts["revision"]

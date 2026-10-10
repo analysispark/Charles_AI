@@ -27,6 +27,8 @@ Markdown 문서를 작성하라.
             "writing": context.artifacts.get("writing", ""),
             "review": context.artifacts.get("review", ""),
             "revision": context.artifacts.get("revision", ""),
+            "qa_review": context.artifacts.get("qa_review", ""),
+            "qa_status": context.artifacts.get("qa_status", ""),
         }
 
         for name, content in artifacts.items():

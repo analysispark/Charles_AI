@@ -13,11 +13,17 @@ class TaskContext:
             "coding": "",
             "writing": "",
             "review": "",
-            "revision": ""
+            "revision": "",
+            "qa_review": "",
+            "qa_status": ""
         }
     )
 
-    metadata: dict = field(default_factory=dict)
+    metadata: dict = field(
+        default_factory=lambda: {
+            "max_revision_attempts": 2
+        }
+    )
 
     created_at: str = field(
         default_factory=lambda:
