@@ -139,6 +139,7 @@ Markdown 코드 울타리와 JSON 외 설명을 사용하지 마라.
                     source="user",
                 )
             ],
+            json_output=True,
             extra_create_args={
                 "think": False,
             },

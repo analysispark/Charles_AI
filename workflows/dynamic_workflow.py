@@ -331,9 +331,9 @@ Writing Result:
             "ReviewAgent.evaluate_final",
         )
 
-        qa_result = parse_qa_result(raw_qa_result)
-
         context.artifacts["qa_review"] = raw_qa_result
+
+        qa_result = parse_qa_result(raw_qa_result)
         context.artifacts["qa_status"] = qa_result["status"]
         context.metadata["final_qa_score"] = qa_result["score"]
 
@@ -404,9 +404,9 @@ Writing Result:
                 "ReviewAgent.evaluate_final attempt 2",
             )
 
-            qa_result = parse_qa_result(raw_qa_result)
-
             context.artifacts["qa_review"] = raw_qa_result
+
+            qa_result = parse_qa_result(raw_qa_result)
             context.artifacts["qa_status"] = qa_result["status"]
             context.metadata["final_qa_score"] = qa_result["score"]
 
